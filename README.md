@@ -1,98 +1,125 @@
-## Apple Filing Protocol Library - afpfs-ng - libafpclient
+# afpfs-ng - Apple Filing Protocol Client Library
 
-### Description
+**Version 0.8.2**
 
-AFPFS is a client implementation of the Apple Filing Protocol written in C which
-can be used to access AFP shares exposed by multiple devices, notably Mac OS X
-computers, linux devices exporting shares with netatalk, Apple Airport and 
-Time Capsule products as well as other NAS devices from various vendors.
+afpfs-ng is a client implementation of the Apple Filing Protocol (AFP) written in C. It provides a library (`libafpclient`) and command-line tools for accessing AFP shares from Linux, FreeBSD, and other Unix-like systems.
 
+## Compatible Servers
 
-### Changelog
+- Mac OS X / macOS computers
+- Netatalk (Linux AFP server)
+- Apple Time Capsule and AirPort Express
+- Various NAS devices with AFP support
 
-This is afpfs-ng-0.8.2, it brings IPV6 support and includes many bugfixes.
-Read NEWS for more details.
+## Components
 
+| Component | Description |
+|-----------|-------------|
+| `libafpclient` | Core AFP client library (shared and static) |
+| `afpcmd` | Interactive command-line AFP client (FTP-like) |
+| `afpgetstatus` | Query server status without authenticating |
+| `fuse/` | FUSE-based filesystem mount daemon (`afpfsd`, `mount_afp`) |
 
-### Installation
+## Build Dependencies
 
-Pretty standard unix stuff:
-```bash
-./configure && make && sudo make install && echo 'done!'
-```
+| Dependency | Required for |
+|------------|-------------|
+| libgcrypt | Encrypted login methods (DHX2, etc.) |
+| libgmp | Cryptographic operations |
+| libreadline + libncurses | Command-line client (`afpcmd`) |
+| libfuse (>= 2.7.0) | FUSE filesystem mounting (optional) |
 
-Use --disable-fuse and/or --disable-gcrypt if your system cannot meet those dependancies.
-(note that disabling gcrypt will prevent you from using login/password auth.)
-
-The command line tool needs ncurses-dev and libreadline-dev to compile. Install them
-with sudo apt-get install ncurses-dev libreadline-dev on ubuntu/debian.
-
-### Usage
-
-You can either use afpfs to mount an AFP share with fuse or with the command-line client.
-
-#### fuse
-
-Mount the time_travel volume from delorean.local (in this example, my time capsule's hostname)
-on /mnt/timetravel without authentication:
+## Building
 
 ```bash
-$ mount_afp afp://delorean.local/time_travel /mnt/timetravel
+./configure && make && sudo make install
 ```
 
-Same, with authentication:
+### Configure options
+
+| Flag | Description |
+|------|-------------|
+| `--disable-fuse` | Build without FUSE support |
+| `--disable-gcrypt` | Build without libgcrypt (limits UAM support) |
+
+On FreeBSD or systems where dependencies live in `/usr/local`:
 
 ```bash
-$ mount_afp afp://simon:mypassword@delorean.local/time_travel /mnt/timetravel
+CFLAGS="-I/usr/local/include -L/usr/local/lib" ./configure && make && sudo make install
 ```
 
-Same, with authentication, forcing the UAM of your choice (usually not needed):
+## Usage
+
+### Command-line client (`afpcmd`)
+
+Interactive AFP shell with command history and filename completion:
 
 ```bash
-$ mount_afp afp://simon;AUTH=DHX2:mypassword@delorean.local/time_travel /mnt/timetravel
+# Connect to a volume
+afpcmd afp://username:password@hostname.local/volumename
+
+# Anonymous connection, list volumes
+afpcmd afp://hostname.local/
 ```
 
-Unmount the volume:
+Supported commands: `cd`, `ls`, `get`, `put`, `mkdir`, `rmdir`, `delete`, `rename`, `touch`, `chmod`, `pwd`, `lpwd`, `lcd`, `status`, `statvfs`, `passwd`, `user`, `disconnect`, `help`, `exit`.
+
+Batch mode for file transfers:
 
 ```bash
-$ fusermount -u /mnt/timetravel
+afpcmd afp://user:pass@server/Path/to/file.tar.bz2
 ```
 
-#### command line client
+### FUSE mounting
 
-Open volume time_travel on delorean.local:
+Start the management daemon:
 
 ```bash
-$ afpcmd afp://simon:mypassword@delorean.local/time_travel
+afpfsd -d   # -d for debug output
 ```
 
-Connect anonymously to delorean.local, list all available volumes:
+Mount a volume (Mac OS X style syntax):
 
 ```bash
-$ afpcmd afp://simon:mypassword@delorean.local/
+mount_afp afp://username:password@hostname.local/volumename /mnt/mountpoint
+mount_afp afp://username;AUTH=DHX2:password@hostname.local/volumename /mnt/mountpoint
 ```
 
-cd to change directories, ls to list, get file to retrieve file, put file to put file...
-and help for a list of supported commands.
+Mount read-only:
 
+```bash
+mount_afp -o ro afp://user:pass@hostname/volume /mnt/mountpoint
+```
 
-### Credits and license
+Unmount:
 
-This is a fork of the original afpfs-ng project that has gone unmaintained
-for quite some time. It is so far the only available open source AFP client.
+```bash
+fusermount -u /mnt/mountpoint
+```
 
-This repository includes many patches collected by the XBMC project
-(www.xbmc.org) as well as mine, in a bid to improve stability, performance and
-to implement new features.
+### Server status
 
-Check AUTHORS for a somewhat complete list of contributors.
+```bash
+afpgetstatus afp://hostname.local
+```
 
-The original afpfs-ng webiste can be found at https://sites.google.com/site/alexthepuffin/home
+## Protocol Support
 
-This project retains the original author's license and is distributed under the GPL.
+- AFP 3.x (including 3.2/3.3 partial support)
+- AFP 2.x (partial)
+- IPv6 via `getaddrinfo()`
+- Multiple UAMs (User Authentication Methods) including DHX2
 
+## License
 
-### Feedback and patches
+GPL (same as the original afpfs-ng)
 
-Feel free to send your feedback/patches/flames at simon (dot) vetter (at) gmx.com .
+## Credits
 
+This is a fork of the original afpfs-ng project (now unmaintained). It includes patches from the XBMC project and upstream contributions.
+
+Original project: https://sites.google.com/site/alexthepuffin/home
+
+Contact: simon.vetter@gmx.com
+
+See `AUTHORS` for a list of contributors.

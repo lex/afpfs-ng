@@ -19,6 +19,7 @@
 #include <signal.h>
 #include "cmdline_afp.h"
 #include "cmdline_testafp.h"
+#include "afpfs-ng/afp.h"
 
 static int running=1;
 static int loop_started=0;

@@ -42,6 +42,7 @@
 #define unicode_h
 
 #include <ctype.h>
+#include <stddef.h>
 
 /* The data type used for 16 bit character strings.
  * The format is handled compatible to *XChar2b* used by Xlib.
@@ -56,9 +57,7 @@ typedef unsigned short char16;
  *	Returns:	Length in char16's
  */
 extern int str16len(
-#if NeedFunctionPrototypes
-	char16 *	/* str16 */
-#endif
+	char16 * str16
 );
 
 /*	Function Name:	str16chr
@@ -70,10 +69,8 @@ extern int str16len(
  *			in str16 or NULL.
  */
 extern char16 *str16chr(
-#if NeedFunctionPrototypes
-	char16 *,	/* str16 */
-	char		/* ch */
-#endif
+	char16 * str16,
+	char ch
 );
 
 /*	Function Name:	str16cpy
@@ -83,10 +80,8 @@ extern char16 *str16chr(
  *	Returns:	None
  */
 extern void str16cpy(
-#if NeedFunctionPrototypes
-	char16 *,	/* dest */
-	char16 *	/* src */
-#endif
+	char16 * dest,
+	char16 * src
 );
 
 /*	Function Name:	str16ncpy
@@ -98,11 +93,9 @@ extern void str16cpy(
  *	Returns:	None	
  */
 extern void str16ncpy(
-#if NeedFunctionPrototypes
-	char16 *,	/* dest */
-	char16 *,	/* src */
-	size_t		/* n */
-#endif
+	char16 * dest,
+	char16 * src,
+	size_t n
 );
 
 /*	Function Name:	str16cat
@@ -112,10 +105,8 @@ extern void str16ncpy(
  *	Returns:	None
  */
 extern void str16cat(
-#if NeedFunctionPrototypes
-	char16 *,	/* dest */
-	char16 *	/* src */
-#endif
+	char16 * dest,
+	char16 * src
 );
 
 /*	Function Name:	mbCharLen
@@ -126,9 +117,7 @@ extern void str16cat(
  *			or 0 in case of an error.
  */
 extern int mbCharLen(
-#if NeedFunctionPrototypes
-	char *		/* str */
-#endif
+	char * str
 );
 
 /*	Function Name:	mbStrLen
@@ -140,9 +129,7 @@ extern int mbCharLen(
  *			See UTF8toUCS2() for the reason!
  */
 extern int mbStrLen(
-#if NeedFunctionPrototypes
-	char *		/* str */
-#endif
+	char * str
 );
 
 /*	Function Name:	UTF8toUCS2
@@ -161,9 +148,7 @@ extern int mbStrLen(
  *			char16 is used to increase the performance.
  */
 extern char16 *UTF8toUCS2(
-#if NeedFunctionPrototypes
-	char *		/* str */
-#endif
+	char * str
 );
 
 /*      Function Name:  UCS2toUTF8
@@ -173,9 +158,7 @@ extern char16 *UTF8toUCS2(
  *                      for this string has to be freed by the caller!
  */
 extern char *UCS2toUTF8(
-#if NeedFunctionPrototypes
-        char16 *          /* str */
-#endif
+	char16 * str
 );
 
 /*      Function Name:  UCS2precompose
@@ -188,10 +171,8 @@ extern char *UCS2toUTF8(
  *                      -1 if no such composition exists in table.
  */
 extern int UCS2precompose(
-#if NeedFunctionPrototypes
-	char16,           /* first */
-	char16            /* second */
-#endif
+	char16 first,
+	char16 second
 );
 
 #endif
