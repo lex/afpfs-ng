@@ -156,6 +156,8 @@ static int dsi_remove_from_request_queue(struct afp_server *server,
 				server->command_requests=p->next;
 			else
 				prev->next = p->next;
+			if (server->command_requests_tail == p)
+				server->command_requests_tail = prev;
 			server->stats.requests_pending--;
 			free(p);
 			pthread_mutex_unlock(&server->request_queue_mutex);
@@ -211,9 +213,10 @@ int dsi_send(struct afp_server *server, char * msg, int size,int wait,unsigned c
 	pthread_mutex_lock(&server->request_queue_mutex);
 	if (server->command_requests==NULL) {
 		server->command_requests=new_request;
+		server->command_requests_tail=new_request;
 	} else {
-		for (p=server->command_requests;p->next;p=p->next);
-		p->next=new_request;
+		server->command_requests_tail->next=new_request;
+		server->command_requests_tail=new_request;
 	}
 	server->stats.requests_pending++;
 	pthread_mutex_unlock(&server->request_queue_mutex);

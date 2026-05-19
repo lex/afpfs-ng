@@ -227,6 +227,7 @@ struct afp_server {
 	unsigned short lastrequestid;
 	unsigned short expectedrequestid;
 	struct dsi_request * command_requests;
+	struct dsi_request * command_requests_tail;
 
 
 	char loginmesg[200];
