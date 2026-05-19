@@ -14,7 +14,7 @@
 
 #undef DID_CACHE_DISABLE
 
-static unsigned short timeout=10;
+static unsigned short timeout=60;
 
 struct did_cache_entry {
                                  /* For the example /foo/bar/baz */
