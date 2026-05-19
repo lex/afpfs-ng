@@ -14,6 +14,7 @@
 #include <errno.h>
 #include <string.h>
 #include <stdio.h>
+#include <unistd.h>
 #ifdef __linux__
 #include <asm/fcntl.h>
 #else
@@ -93,7 +94,7 @@ int ll_handle_locking(struct afp_volume * volume,unsigned short forkid,
 		case kFPLockErr:  /*Some or all of the requested range is locked
 				    by another user. */
 
-			sleep(1);
+			usleep(10000); /* 10ms retry wait, only on actual lock contention */
 			break;
 		default:
 			return -1;
