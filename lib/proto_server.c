@@ -14,6 +14,7 @@
 #include "afpfs-ng/afp_protocol.h"
 #include "afpfs-ng/codepage.h"
 #include "afp_internal.h"
+#include "did.h"
 
 int afp_getsrvrparms(struct afp_server *server)
 {
@@ -82,6 +83,8 @@ int afp_getsrvrparms_reply(struct afp_server *server, char * msg, unsigned int s
 				strlen(vol->volume_name),
 				vol->volume_name_printable,
 				AFP_VOLUME_NAME_UTF8_LEN);
+
+		getattr_cache_init(vol);
 	}
 	return 0;
 }

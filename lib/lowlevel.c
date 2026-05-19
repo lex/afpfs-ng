@@ -529,11 +529,11 @@ int ll_getattr(struct afp_volume * volume, const char *path, struct stat *stbuf,
 		return -ENOENT;
 	}
 
-	dirbitmap=kFPAttributeBit 
+	dirbitmap=kFPAttributeBit
 		| kFPCreateDateBit | kFPModDateBit|
 		kFPNodeIDBit |
 		kFPParentDirIDBit | kFPOffspringCountBit;
-	filebitmap=kFPAttributeBit | 
+	filebitmap=kFPAttributeBit |
 		kFPCreateDateBit | kFPModDateBit |
 		kFPNodeIDBit |
 		kFPFinderInfoBit |
@@ -560,11 +560,16 @@ int ll_getattr(struct afp_volume * volume, const char *path, struct stat *stbuf,
 		dirbitmap|=kFPOwnerIDBit | kFPGroupIDBit;
 	}
 
+	/* Check getattr cache before hitting the network */
+	if (getattr_cache_lookup(volume, dirid, basename, &fp) == 0) {
+		goto fill_stat;
+	}
+
 	rc=afp_getfiledirparms(volume,dirid,filebitmap,dirbitmap,
 		(char *) basename,&fp);
 
 	switch(rc) {
-		
+
 	case kFPAccessDenied:
 		return -EACCES;
 	case kFPObjectNotFound:
@@ -577,6 +582,11 @@ int ll_getattr(struct afp_volume * volume, const char *path, struct stat *stbuf,
 	default:
 		return -EIO;
 	}
+
+	/* Store in getattr cache */
+	getattr_cache_store(volume, dirid, basename, &fp);
+
+fill_stat:
 
 	if (volume->server->using_version->av_number>=30 && fp.unixprivs.permissions != 0)
 		stbuf->st_mode |= fp.unixprivs.permissions;
