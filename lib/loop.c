@@ -212,7 +212,7 @@ int afp_main_loop(int command_fd) {
 		ords=rds;
 		oeds=rds;
 		if (loop_started) {
-			tv.tv_sec=30;
+			tv.tv_sec=5;
 			tv.tv_nsec=0;
 		} else {
 			tv.tv_sec=0;
