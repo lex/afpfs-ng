@@ -18,6 +18,7 @@ static unsigned short timeout=10;
 
 struct did_cache_entry {
                                  /* For the example /foo/bar/baz */
+	unsigned char isdir;         /* 1 if directory, 0 if file    */
 	char dirname[AFP_MAX_PATH];  /* full name, eg. /foo/bar/     */
 	unsigned int did;            /*            eg  2323          */
 	struct timeval time;
@@ -68,8 +69,8 @@ int remove_did_entry(struct afp_volume * volume, const char * name)
 }
 
 	
-static int add_did_cache_entry(struct afp_volume * volume, 
-	unsigned int new_did, char * path)
+static int add_did_cache_entry(struct afp_volume * volume,
+	unsigned int new_did, char * path, unsigned char isdir)
 {
 
 	struct did_cache_entry * new, *old_base;
@@ -83,6 +84,7 @@ static int add_did_cache_entry(struct afp_volume * volume,
 
 	memset(new,0,sizeof(*new));
 
+	new->isdir=isdir;
 	new->did=new_did;
 	memcpy(new->dirname,path,AFP_MAX_PATH);
 	gettimeofday(&new->time,NULL);
@@ -97,19 +99,38 @@ static int add_did_cache_entry(struct afp_volume * volume,
 
 }
 
-unsigned char is_dir(struct afp_volume * volume, 
+static struct did_cache_entry * find_did_cache_entry(
+	struct afp_volume * volume, unsigned int parentdid,
+	const char * path, unsigned int pathlen)
+{
+	struct did_cache_entry * p;
+	char key[AFP_MAX_PATH];
+
+	memset(key, 0, sizeof(key));
+	memcpy(key, path, pathlen);
+
+	pthread_mutex_lock(&volume->did_cache_mutex);
+	for (p=volume->did_cache_base;p;p=p->next) {
+		if (strcmp(p->dirname, key)==0) {
+			volume->did_cache_stats.hits++;
+			break;
+		}
+	}
+	pthread_mutex_unlock(&volume->did_cache_mutex);
+	return p;
+}
+
+unsigned char is_dir(struct afp_volume * volume,
 	unsigned int parentdid, const char * path)
 {
 	int ret;
 	unsigned int filebitmap=0;
 	unsigned int dirbitmap=0;
 	struct afp_file_info fi;
-#if 0
 	struct did_cache_entry * p;
 
-	if ((p=find_did_cache_entry(volume,parentdid,path,strlen(path)))) 
+	if ((p=find_did_cache_entry(volume,parentdid,path,strlen(path))))
 		return p->isdir;
-#endif
 	ret =afp_getfiledirparms(volume,parentdid,
 		filebitmap,dirbitmap,path,&fi);
 
@@ -243,7 +264,7 @@ int get_dirid(struct afp_volume * volume, const char * path,
 			/* Add it to the cache */
 			memset(copy,0,AFP_MAX_PATH);
 			memcpy(copy,path,p-path);
-			add_did_cache_entry(volume, fi.fileid,copy);
+			add_did_cache_entry(volume, fi.fileid,copy, fi.isdir);
 
 		} else {
 			break;
