@@ -282,6 +282,7 @@ int afp_unmount_volume(struct afp_volume * volume)
 	afp_flush(volume);
 
 	free_entire_did_cache(volume);
+	getattr_cache_clear(volume);
 	remove_fork_list(volume);
 	if (volume->dtrefnum) afp_closedt(server,volume->dtrefnum);
 	volume->dtrefnum=0;

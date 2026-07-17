@@ -516,7 +516,7 @@ found with getvolparm or volopen, then to test chmod the first time.
 		return -ENOSYS;
 	}
 
-
+	getattr_cache_invalidate(vol, dirid);
 
 	return -ret;
 }
@@ -571,6 +571,8 @@ int ml_unlink(struct afp_volume * vol, const char *path)
 		break;
 	default:
 		ret=0;
+		if (ret == 0)
+			getattr_cache_invalidate(vol, dirid);
 	}
 	return -ret;
 }
@@ -629,6 +631,9 @@ int ml_mkdir(struct afp_volume * vol, const char * path, mode_t mode)
 	default:
 		ret =0;
 	}
+
+	if (ret == 0)
+		getattr_cache_invalidate(vol, dirid);
 
 	return -ret;
 }
@@ -744,6 +749,15 @@ int ml_write(struct afp_volume * volume, const char * path,
 
 	ret=ll_write(volume,data,size,offset,fp,&totalwritten);
 	if (ret<0) return ret;
+
+	/* Invalidate getattr cache for the written file's parent dir */
+	{
+		unsigned int wdirid;
+		char wbasename[AFP_MAX_PATH];
+		if (get_dirid(volume, converted_path, wbasename, &wdirid)==0)
+			getattr_cache_invalidate(volume, wdirid);
+	}
+
 	return totalwritten;
 }
 
@@ -964,6 +978,7 @@ THIS IS the wrong set of returns to check...
 	case -ENOSYS:
 		return -ENOSYS;
 	case kFPNoErr:
+		getattr_cache_invalidate(vol, dirid);
 		break;
 	case kFPAccessDenied:
 		return -EACCES;
@@ -1017,6 +1032,14 @@ int ml_truncate(struct afp_volume * vol, const char * path, off_t offset)
 	if ((ret=ll_zero_file(vol,fp->forkid,0)))
 		goto out;
 
+	/* Invalidate getattr cache for truncated file */
+	{
+		unsigned int tdirid;
+		char tbasename[AFP_MAX_PATH];
+		if (get_dirid(vol, converted_path, tbasename, &tdirid)==0)
+			getattr_cache_invalidate(vol, tdirid);
+	}
+
 	afp_closefork(vol,fp->forkid);
 	remove_opened_fork(vol, fp);
 	free(fp);
@@ -1068,6 +1091,7 @@ int ml_utime(struct afp_volume * vol, const char * path,
 
 	switch(rc) {
 	case kFPNoErr:
+		getattr_cache_invalidate(vol, dirid);
 		break;
 	case kFPAccessDenied:
 		return -EACCES;
@@ -1341,10 +1365,14 @@ int ml_rename(struct afp_volume * vol,
 	case kFPNoErr:
 		ret=0;
 		break;
-	default:	
+	default:
 	case kFPParamErr:
 	case kFPMiscErr:
 		ret=EIO;
+	}
+	if (ret == 0) {
+		getattr_cache_invalidate(vol, dirid_from);
+		getattr_cache_invalidate(vol, dirid_to);
 	}
 	return -ret;
 }
