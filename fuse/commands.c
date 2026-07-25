@@ -148,7 +148,8 @@ static int fuse_scan_extra_fds(int command_fd, fd_set *set, int * max_fd)
 		goto out;
 	}
 	/* unknown fd */
-	sleep(10);
+	log_for_client(NULL,AFPFSD,LOG_WARNING,"Unknown fd in fdset, ignoring\n");
+	usleep(100000);
 
 	return 0;
 
